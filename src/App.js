@@ -1,21 +1,50 @@
-import React, { Component } from 'react';
-import './stylesheets/App.css'
-import { Segment } from 'semantic-ui-react';
+import React, { useEffect, useState } from "react";
+import PizzaList from "./PizzaList";
+import PizzaForm from "./PizzaForm";
 
+function App() {
+  const [pizzas, setPizzas] = useState([]);
+  const [selectedPizza, setSelectedPizza] = useState(null);
 
-class App extends Component {
+  // Fetch pizzas from backend
+  useEffect(() => {
+    fetch("http://localhost:3001/pizzas")
+      .then((res) => res.json())
+      .then((data) => setPizzas(data));
+  }, []);
 
-  // As you go through the components given you'll see a lot of functional components.
-  // But feel free to change them to whatever you want.
-  // It's up to you whether they should be stateful or not.
-
-  render(){
-    return (
-      <Segment id='app'>
-        {/* What components should go here? Check out Checkpoint 1 of the Readme if you're confused */}
-      </Segment>
-    )
+  // Select pizza for editing
+  function handleEditPizza(pizza) {
+    setSelectedPizza(pizza);
   }
+
+  // Update pizza in backend + state
+  function handleUpdatePizza(updatedPizza) {
+    fetch(`http://localhost:3001/pizzas/${updatedPizza.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedPizza),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        // Update local state
+        setPizzas((pizzas) =>
+          pizzas.map((p) => (p.id === data.id ? data : p))
+        );
+        setSelectedPizza(null); // clear form
+      });
+  }
+
+  return (
+    <div className="App">
+      <h1>🍕 Flatiron Pizzeria Menu</h1>
+      <PizzaForm
+        pizza={selectedPizza}
+        onUpdatePizza={handleUpdatePizza}
+      />
+      <PizzaList pizzas={pizzas} onEditPizza={handleEditPizza} />
+    </div>
+  );
 }
 
 export default App;
